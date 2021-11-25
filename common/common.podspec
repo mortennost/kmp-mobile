@@ -5,7 +5,7 @@ Pod::Spec.new do |spec|
     spec.source                   = { :git => "Not Published", :tag => "Cocoapods/#{spec.name}/#{spec.version}" }
     spec.authors                  = ''
     spec.license                  = ''
-    spec.summary                  = 'KMP Mobile Template common module'
+    spec.summary                  = 'KMM Workshop'
 
     spec.vendored_frameworks      = "build/cocoapods/framework/common.framework"
     spec.libraries                = "c++"

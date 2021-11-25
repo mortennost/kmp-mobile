@@ -1,4 +1,4 @@
-package io.xorum.android
+package io.shortcut.android
 
 import org.junit.Test
 
