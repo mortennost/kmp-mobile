@@ -7,15 +7,16 @@ import io.ktor.client.features.json.serializer.*
 import io.ktor.client.features.logging.*
 import io.ktor.http.*
 
-const val BACKEND_LINK = "api.open-notify.org"
+const val PEOPLEINSPACE_URL = "api.open-notify.org"
+const val GITHUB_URL = "api.github.com"
 
 class HttpClientFactory {
 
     fun create() = HttpClient {
         defaultRequest {
             url {
-                host = BACKEND_LINK
-                protocol = URLProtocol.HTTP
+                host = GITHUB_URL
+                protocol = URLProtocol.HTTPS
             }
         }
         Json {

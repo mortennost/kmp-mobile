@@ -24,8 +24,10 @@ internal suspend inline fun <T> request(block: () -> T) = try {
     Response.Failure(null)
 }
 
+private val json = Json { ignoreUnknownKeys = true }
+
 internal fun getError(jsonString: String) =
-    Json { ignoreUnknownKeys = true }.decodeFromString(NetworkError.serializer(), jsonString)
+    json.decodeFromString(NetworkError.serializer(), jsonString)
 
 @Serializable
 internal data class NetworkError(val error: String? = null)

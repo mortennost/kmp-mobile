@@ -3,22 +3,29 @@ package io.shortcut.android.features
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
-import io.shortcut.features.space.redux.SpaceRequests
-import io.shortcut.features.space.redux.SpaceState
+import io.shortcut.features.github.entity.Issue
+import io.shortcut.features.github.redux.GithubRequests
+import io.shortcut.features.github.redux.GithubState
 import io.shortcut.redux.store
 import tw.geothings.rekotlin.StoreSubscriber
 
-class MainActivity : ComponentActivity(), StoreSubscriber<SpaceState> {
+class MainActivity : ComponentActivity(), StoreSubscriber<GithubState> {
 
-    private val spaceState = MutableLiveData<SpaceState>()
+    private val githubState = MutableLiveData<GithubState>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,11 +33,11 @@ class MainActivity : ComponentActivity(), StoreSubscriber<SpaceState> {
             MainView()
         }
 
-        store.dispatch(SpaceRequests.FetchPeopleInSpace())
+        store.dispatch(GithubRequests.FetchIssues("mortennost", "kmp-mobile"))
     }
 
-    override fun onNewState(state: SpaceState) {
-        spaceState.postValue(state)
+    override fun onNewState(state: GithubState) {
+        githubState.postValue(state)
     }
 
     override fun onStart() {
@@ -38,8 +45,8 @@ class MainActivity : ComponentActivity(), StoreSubscriber<SpaceState> {
 
         store.subscribe(this) { state ->
             state.skipRepeats { oldState, newState ->
-                oldState.space == newState.space
-            }.select { it.space }
+                oldState.githubState == newState.githubState
+            }.select { it.githubState }
         }
     }
 
@@ -52,18 +59,49 @@ class MainActivity : ComponentActivity(), StoreSubscriber<SpaceState> {
     private fun MainView(
         modifier: Modifier = Modifier
     ) {
-        val state = spaceState.observeAsState().value ?: return
+        val state = githubState.observeAsState().value ?: return
 
         Box(
             modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            contentAlignment = Alignment.TopCenter
         ) {
-            Text(
-                text = when (state.status) {
-                    SpaceState.Status.IDLE -> state.peopleInSpace?.number.toString()
-                    SpaceState.Status.PENDING -> "Loading ..."
-                }
-            )
+            when(state.status) {
+                GithubState.Status.IDLE -> IssuesList(issues = state.issues)
+                else -> CircularProgressIndicator()
+            }
         }
     }
+
+    @Composable
+    private fun IssuesList(issues: List<Issue>) =
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(issues) { issue ->
+                Card(
+                    modifier = Modifier.fillMaxWidth()
+                        .clickable {
+                            showIssueDetails(issue.number)
+                        }
+                ) {
+                    Column(
+                        modifier = Modifier.padding(8.dp)
+                    ) {
+                        Text(
+                            text = "#${issue.number}: ${issue.title}",
+                            style = MaterialTheme.typography.h6
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = issue.body,
+                            style = MaterialTheme.typography.body1
+                        )
+                    }
+                }
+            }
+        }
+
+    private fun showIssueDetails(issueNumber: Int) =
+        startActivity(DetailsActivity.createIntent(this, issueNumber))
 }
